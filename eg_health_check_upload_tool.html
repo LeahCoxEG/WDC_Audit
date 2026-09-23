@@ -1,0 +1,518 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--surface-0,#f5f7fa);color:var(--text-primary,#1a2332);font-size:14px}
+.upload-zone{border:2px dashed var(--border,#e0e4ea);border-radius:12px;padding:40px 24px;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;background:var(--surface-2,#fff);margin:24px}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--fill-accent,#378add);background:var(--bg-accent,#e6f1fb)}
+.upload-zone i{font-size:36px;color:var(--text-muted,#888780);display:block;margin-bottom:12px}
+.upload-zone h3{font-size:16px;font-weight:500;margin-bottom:6px}
+.upload-zone p{font-size:13px;color:var(--text-secondary,#5a6478)}
+.upload-btn{display:inline-block;margin-top:14px;padding:8px 20px;border-radius:var(--radius,8px);border:0.5px solid var(--border-strong,#b4b2a9);cursor:pointer;font-size:13px;font-weight:500;background:var(--surface-2,#fff);color:var(--text-primary,#1a2332)}
+.upload-btn:hover{background:var(--surface-1,#f1efe8)}
+.header{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;background:var(--hdr-bg,#003580);color:#fff;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+.logo{font-size:20px;font-weight:700}
+.logo-sep{color:var(--hdr-accent,#00a9b5)}
+.hdr-sub{font-size:12px;opacity:.8;margin-left:12px}
+.toolbar{padding:12px 24px;background:var(--surface-2,#fff);border-bottom:0.5px solid var(--border,#e0e4ea);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.month-toggle,.mode-toggle{display:flex;border:0.5px solid var(--border-strong,#888);border-radius:var(--radius,8px);overflow:hidden}
+.tog-btn{padding:6px 16px;border:none;cursor:pointer;font-size:12px;font-weight:500;background:var(--surface-2,#fff);color:var(--text-primary,#1a2332);transition:background .15s}
+.tog-btn.active{background:var(--hdr-bg,#003580);color:#fff}
+.search-input{border:0.5px solid var(--border-strong,#888);border-radius:var(--radius,8px);padding:7px 13px;font-size:14px;width:230px;outline:none;background:var(--surface-2,#fff);color:var(--text-primary,#1a2332)}
+.search-input:focus{border-color:var(--fill-accent,#378add)}
+.go-btn{padding:7px 16px;border-radius:var(--radius,8px);border:none;cursor:pointer;font-size:13px;font-weight:600;background:var(--hdr-bg,#003580);color:#fff}
+.hint{font-size:11px;color:var(--text-secondary,#5a6478);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.state-msg{padding:48px 24px;text-align:center;color:var(--text-secondary,#5a6478)}
+.state-msg h3{font-size:17px;color:var(--text-primary,#1a2332);margin-bottom:6px;font-weight:500}
+.snapshot{display:none}
+.prop-header{padding:18px 24px 0}
+.prop-title{font-size:20px;font-weight:600;color:var(--hdr-bg,#003580);margin-bottom:6px}
+.prop-meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.badge{background:#eef2f9;color:var(--hdr-bg,#003580);border-radius:4px;padding:2px 9px;font-size:11px;font-weight:600}
+.badge-month{background:var(--hdr-bg,#003580);color:#fff;border-radius:4px;padding:2px 9px;font-size:11px;font-weight:700}
+.badge-accent{background:var(--bg-accent,#e6f1fb);color:var(--hdr-accent,#006b74);border-radius:4px;padding:2px 9px;font-size:11px;font-weight:600}
+.sec-title{margin:16px 24px 0;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--text-secondary,#5a6478);border-bottom:0.5px solid var(--border,#e0e4ea);padding-bottom:5px}
+.sec-grid{padding:12px 24px;display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+.card{background:var(--surface-2,#fff);border-radius:12px;border:0.5px solid var(--border,#e0e4ea);padding:14px}
+.card-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-secondary,#5a6478);margin-bottom:10px}
+.score-row{display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:0.5px solid #f0f2f5}
+.score-row:last-child{border-bottom:none}
+.score-num{font-size:17px;font-weight:700}
+.good{color:#1e9c5b}.warn{color:#e8a000}.bad{color:#d94040}.neutral{color:var(--text-primary,#1a2332)}
+.mom{font-size:10px;padding:2px 6px;border-radius:20px;font-weight:600;margin-left:6px}
+.mom-up{background:#fde8e8;color:#d94040}.mom-down{background:#e4f5ec;color:#1e9c5b}.mom-flat{background:#f0f2f5;color:#888780}
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.kpi-label{font-size:10px;color:var(--text-secondary,#5a6478);margin-bottom:2px}
+.kpi-val{font-size:18px;font-weight:700}
+.yoy-pos{color:#1e9c5b}.yoy-neg{color:#d94040}
+.kpi-sub{font-size:10px;color:var(--text-secondary,#5a6478);margin-top:1px}
+.prog-row{margin-bottom:9px}
+.prog-label-row{display:flex;justify-content:space-between;margin-bottom:3px;font-size:11px}
+.prog-track{height:7px;background:#e8ecf2;border-radius:4px;overflow:hidden}
+.prog-fill{height:100%;border-radius:4px;transition:width .4s ease}
+.pg-good{background:#1e9c5b}.pg-warn{background:#e8a000}.pg-bad{background:#d94040}
+.mix-bar{height:22px;border-radius:4px;overflow:hidden;display:flex;margin:8px 0 5px}
+.mix-b2c{background:var(--hdr-bg,#003580);display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px;font-weight:700}
+.mix-b2b{background:var(--hdr-accent,#00a9b5);display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px;font-weight:700}
+.mix-legend{display:flex;gap:12px;font-size:11px}
+.mix-dot{width:9px;height:9px;border-radius:2px;display:inline-block;margin-right:3px;vertical-align:middle}
+.fsmi-box{text-align:center;padding:10px;background:#f8fafc;border-radius:6px;border:0.5px solid var(--border,#e0e4ea)}
+.fsmi-val{font-size:24px;font-weight:800}
+.fsmi-over{color:#1e9c5b}.fsmi-under{color:#d94040}.fsmi-fair{color:var(--hdr-bg,#003580)}
+.vs-chip{font-size:10px;font-weight:600;margin-left:5px}
+.bulk-area{padding:12px 24px;background:var(--surface-2,#fff);border-bottom:0.5px solid var(--border,#e0e4ea);display:none;gap:14px;align-items:flex-start;flex-wrap:wrap}
+.bulk-area.show{display:flex}
+.bulk-ta{border:0.5px solid var(--border-strong,#888);border-radius:var(--radius,8px);padding:9px 12px;font-size:12px;width:280px;height:90px;outline:none;resize:vertical;font-family:monospace;background:var(--surface-2,#fff);color:var(--text-primary,#1a2332);line-height:1.6}
+.bulk-ta:focus{border-color:var(--fill-accent,#378add)}
+.bulk-sum{padding:8px 24px;font-size:12px;background:#eef2f9;border-bottom:0.5px solid var(--border,#e0e4ea);display:none}
+.bulk-sum.show{display:block}
+.snap-div{border:none;border-top:2px solid var(--hdr-bg,#003580);margin:0;opacity:.12}
+.upload-again{padding:8px 14px;border-radius:var(--radius,8px);border:0.5px solid var(--border-strong,#888);cursor:pointer;font-size:12px;background:var(--surface-2,#fff);color:var(--text-primary,#1a2332)}
+.upload-again:hover{background:var(--surface-1,#f1efe8)}
+.loading{padding:32px 24px;text-align:center;color:var(--text-secondary,#5a6478);font-size:13px}
+.err-msg{padding:12px 24px;color:#d94040;font-size:13px;background:#fde8e8;margin:12px 24px;border-radius:var(--radius,8px)}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+
+<div id="uploadScreen">
+<div class="upload-zone" id="dropZone">
+  <i class="ti ti-file-spreadsheet" aria-hidden="true"></i>
+  <h3>Upload your monthly health check file</h3>
+  <p>Supports Marriott MI and Wyndham report formats<br>(.xlsx or .xls files from the "Last Month Booked" tab)</p>
+  <label class="upload-btn"><i class="ti ti-upload" aria-hidden="true"></i> Choose file
+    <input type="file" accept=".xlsx,.xls" id="fileInput" style="display:none">
+  </label>
+</div>
+<div id="errMsg" class="err-msg" style="display:none"></div>
+</div>
+
+<div id="dashScreen" style="display:none">
+<div class="header" id="hdr">
+  <div style="display:flex;align-items:center">
+    <div class="logo">EG <span class="logo-sep">|</span> <span id="partnerName">Partner</span></div>
+    <div class="hdr-sub" id="hdrSub">Monthly Health Check · Last Month Booked</div>
+  </div>
+  <button class="upload-again" id="uploadAgain">⬆ Upload new file</button>
+</div>
+
+<div class="toolbar" id="toolbar">
+  <div id="monthToggle" class="month-toggle"></div>
+  <div class="mode-toggle" style="margin-left:4px">
+    <button class="tog-btn active" id="btnSingle" onclick="setMode('single')">Single ID</button>
+    <button class="tog-btn" id="btnBulk" onclick="setMode('bulk')">Bulk IDs</button>
+  </div>
+  <span style="font-size:11px;font-weight:600;color:var(--text-secondary,#5a6478);margin-left:4px">EG ID</span>
+  <input class="search-input" id="searchInput" placeholder="e.g. 87 or hotel name" oninput="onInput()" onkeydown="if(event.key==='Enter')doSearch()">
+  <button class="go-btn" onclick="doSearch()">View</button>
+  <span class="hint" id="hint"></span>
+</div>
+
+<div id="bulkArea" class="bulk-area">
+  <div>
+    <textarea class="bulk-ta" id="bulkInput" placeholder="Paste IDs — one per line or comma-separated&#10;&#10;87&#10;2284&#10;7385"></textarea>
+  </div>
+  <div style="font-size:12px;color:var(--text-secondary,#5a6478);line-height:1.8;margin-top:4px">
+    Up to 50 properties at once.<br>Not-found IDs flagged.<br><br>
+    <button class="go-btn" onclick="doBulk()">View all snapshots</button>
+  </div>
+</div>
+<div id="bulkSum" class="bulk-sum"></div>
+
+<div id="stateDefault" class="state-msg"><h3>Enter an EG Property ID or hotel name to view its snapshot</h3><p id="stateHint">Upload another file to switch partners or months</p></div>
+<div id="stateNotFound" class="state-msg" style="display:none"><h3>Property not found</h3><p id="nfMsg"></p></div>
+<div id="snapshot" class="snapshot"></div>
+</div>
+
+<script>
+var MAPS = {};
+var MONTHS = [];
+var ARRAYS = {};
+var KEYS = [];
+var SCHEMA = null;
+var currentMonth = null;
+var currentMode = 'single';
+var partnerColor = '#003580';
+var partnerAccent = '#00a9b5';
+
+var SCHEMAS = {
+  marriott: {
+    name: 'Marriott',
+    color: '#003580',
+    accent: '#00a9b5',
+    headerRow: 8,
+    dataStart: 10,
+    detect: function(headers) {
+      return headers.some(function(h){ return h && String(h).indexOf('Offer Strength') !== -1; });
+    },
+    extract: function(row) {
+      function sp(v){try{var f=parseFloat(v);return isNaN(f)?null:Math.round(f*1000)/10;}catch(e){return null;}}
+      function sr(v){try{var f=parseFloat(v);return isNaN(f)?null:Math.round(f*1000)/10;}catch(e){return null;}}
+      function sf(v,d){try{var f=parseFloat(v);return isNaN(f)?null:Math.round(f*Math.pow(10,d||2))/Math.pow(10,d||2);}catch(e){return null;}}
+      function sv(v){try{var f=parseFloat(v);return isNaN(f)?null:Math.round(f*10)/10;}catch(e){return null;}}
+      return {
+        id:String(row[1]).split('.')[0],name:String(row[2]||''),code:String(row[3]||''),brand:String(row[4]||''),
+        sr:String(row[5]||''),region:String(row[6]||''),country:String(row[7]||''),market:String(row[8]||''),mm:String(row[9]||''),
+        ges:sf(row[10],0),oss:sf(row[11],0),
+        al:sp(row[12]),al_m:sr(row[13]),rl:sp(row[14]),rl_m:sr(row[15]),cs:sp(row[16]),cs_m:sr(row[17]),
+        nrn:sf(row[18],0),nrn_y:sr(row[19]),nrn_cy:sr(row[20]),
+        rev:sf(row[21],0),rev_y:sr(row[22]),rev_cy:sr(row[23]),
+        b2c:sp(row[24]),b2b:sp(row[25]),
+        b2c_sa:sp(row[26]),b2c_pkg:sp(row[27]),b2b_sa:sp(row[28]),b2b_pkg:sp(row[29]),b2b_wdc_s:sp(row[30]),
+        fsmi:sf(row[31]),
+        bnd_r:sp(row[35]),bnd_a:sp(row[36]),bnd_c:sp(row[37]),
+        wdc_r:sp(row[38]),whl_a:sp(row[39]),whl_c:sp(row[40]),
+        acc:sp(row[42]),acc_cs:sv(row[43]),ta:sp(row[44]),ta_cs:sv(row[45]),
+        mob:sp(row[46]),mob_cs:sv(row[47]),intl:sp(row[48]),intl_cs:sv(row[49]),
+        cxl:sp(row[50]),conn:String(row[52]||'')
+      };
+    }
+  },
+  wyndham: {
+    name: 'Wyndham',
+    color: '#c8102e',
+    accent: '#f5a623',
+    headerRow: 8,
+    dataStart: 10,
+    detect: function(headers) {
+      return headers.some(function(h){ return h && String(h).indexOf('Wyndham') !== -1; }) ||
+             headers.some(function(h){ return h && String(h).indexOf('Refundable') !== -1; });
+    },
+    extract: function(row) {
+      function sp(v){try{var f=parseFloat(v);return isNaN(f)?null:Math.round(f*1000)/10;}catch(e){return null;}}
+      function sr(v){try{var f=parseFloat(v);return isNaN(f)?null:Math.round(f*1000)/10;}catch(e){return null;}}
+      function sf(v,d){try{var f=parseFloat(v);return isNaN(f)?null:Math.round(f*Math.pow(10,d||2))/Math.pow(10,d||2);}catch(e){return null;}}
+      function sv(v){try{var f=parseFloat(v);return isNaN(f)?null:Math.round(f*10)/10;}catch(e){return null;}}
+      return {
+        id:String(row[1]).split('.')[0],name:String(row[2]||''),code:String(row[4]||''),brand:String(row[5]||''),
+        sr:String(row[6]||''),region:String(row[7]||''),country:String(row[8]||''),market:String(row[9]||''),
+        nrn:sf(row[10],0),nrn_y:sr(row[11]),nrn_cy:sr(row[12]),
+        rev:sf(row[13],0),rev_y:sr(row[14]),rev_cy:sr(row[15]),
+        adr:sf(row[16]),adr_y:sr(row[17]),adr_cy:sr(row[18]),
+        al:sp(row[19]),al_m:sr(row[21]),rl:sp(row[22]),rl_m:sr(row[24]),
+        fsmi:sf(row[25]),fsmi_y:sr(row[26]),
+        los:sf(row[27]),los_y:sf(row[28]),los_cs:sf(row[29]),
+        bw:sf(row[30]),bw_y:sf(row[31]),bw_cs:sf(row[32]),
+        ges:sf(row[33],0),oss:sf(row[34],0),cs:sp(row[35]),cs_m:sv(row[36]),
+        pkg:sp(row[37]),pkg_cs:sv(row[39]),
+        acc:sp(row[40]),acc_cs:sv(row[42]),ta:sp(row[43]),ta_cs:sv(row[45]),
+        mob:sp(row[46]),mob_cs:sv(row[48]),intl:sp(row[49]),intl_cs:sv(row[51]),
+        cxl:sp(row[52]),cxl_cs:sv(row[54]),ref:sp(row[55]),ref_cs:sv(row[57])
+      };
+    }
+  }
+};
+
+function detectSchema(wb) {
+  var sheetName = null;
+  wb.SheetNames.forEach(function(n){ if(n.toLowerCase().indexOf('last month') !== -1) sheetName = n; });
+  if(!sheetName) sheetName = wb.SheetNames[0];
+  var ws = wb.Sheets[sheetName];
+  var data = XLSX.utils.sheet_to_json(ws, {header:1, defval:null});
+  var headerRow = data[8] || [];
+  var names = Object.values(SCHEMAS);
+  for(var i=0;i<names.length;i++){
+    if(names[i].detect(headerRow)) return {schema:names[i], data:data, sheetName:sheetName};
+  }
+  var row2 = data[2] || [];
+  var row4 = data[4] || [];
+  for(var j=0;j<row2.length;j++){
+    if(String(row2[j]||'').indexOf('Wyndham') !== -1) return {schema:SCHEMAS.wyndham, data:data, sheetName:sheetName};
+    if(String(row2[j]||'').indexOf('Marriott') !== -1) return {schema:SCHEMAS.marriott, data:data, sheetName:sheetName};
+  }
+  for(var k=0;k<row4.length;k++){
+    if(String(row4[k]||'').indexOf('Wyndham') !== -1) return {schema:SCHEMAS.wyndham, data:data, sheetName:sheetName};
+    if(String(row4[k]||'').indexOf('Marriott') !== -1) return {schema:SCHEMAS.marriott, data:data, sheetName:sheetName};
+  }
+  return {schema:SCHEMAS.marriott, data:data, sheetName:sheetName};
+}
+
+function detectMonthLabel(data, schemaName) {
+  for(var i=0;i<5;i++){
+    var row = data[i] || [];
+    for(var j=0;j<row.length;j++){
+      var v = String(row[j]||'');
+      var m = v.match(/(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{4})/i);
+      if(m) return m[0];
+    }
+  }
+  return 'Unknown month';
+}
+
+function processFile(file) {
+  document.getElementById('errMsg').style.display='none';
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      var wb = XLSX.read(new Uint8Array(e.target.result), {type:'array'});
+      var detected = detectSchema(wb);
+      var schema = detected.schema;
+      var data = detected.data;
+      var monthLabel = detectMonthLabel(data, schema.name);
+      var records = [];
+      for(var i=schema.dataStart; i<data.length; i++){
+        var row = data[i];
+        if(!row || row[1]==null) continue;
+        try {
+          var idRaw = parseFloat(row[1]);
+          if(isNaN(idRaw)) continue;
+          var rec = schema.extract(row);
+          if(!rec.id || rec.id === 'NaN') continue;
+          records.push(rec);
+        } catch(ex){ continue; }
+      }
+      if(records.length === 0){ showErr('No data found. Make sure the file has a "Last Month Booked" tab.'); return; }
+      var key = monthLabel;
+      if(MONTHS.indexOf(key) === -1){ MONTHS.push(key); ARRAYS[key] = records; MAPS[key] = {}; }
+      else { ARRAYS[key] = records; MAPS[key] = {}; }
+      records.forEach(function(r){ MAPS[key][r.id] = r; });
+      SCHEMA = schema;
+      currentMonth = key;
+      partnerColor = schema.color;
+      partnerAccent = schema.accent;
+      buildDash();
+    } catch(err) {
+      showErr('Could not read file: ' + err.message);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function showErr(msg){
+  var el = document.getElementById('errMsg');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+function buildDash(){
+  document.getElementById('uploadScreen').style.display='none';
+  document.getElementById('dashScreen').style.display='block';
+  document.getElementById('partnerName').textContent = SCHEMA.name;
+  document.getElementById('hdr').style.background = partnerColor;
+  document.getElementById('logo-sep-el') && (document.getElementById('logo-sep-el').style.color = partnerAccent);
+  document.querySelector('.logo-sep').style.color = partnerAccent;
+  document.getElementById('stateHint').textContent = MONTHS.length + ' month(s) loaded · Upload another file to add months';
+  buildMonthToggle();
+  document.getElementById('stateDefault').style.display='block';
+  document.getElementById('stateNotFound').style.display='none';
+  document.getElementById('snapshot').style.display='none';
+  document.getElementById('snapshot').innerHTML='';
+  document.getElementById('bulkSum').className='bulk-sum';
+  document.getElementById('searchInput').value='';
+  document.getElementById('hint').textContent='';
+}
+
+function buildMonthToggle(){
+  var mt = document.getElementById('monthToggle');
+  mt.innerHTML='';
+  MONTHS.forEach(function(m){
+    var btn = document.createElement('button');
+    btn.className = 'tog-btn' + (m===currentMonth?' active':'');
+    btn.textContent = m;
+    btn.onclick = function(){ currentMonth=m; buildMonthToggle(); if(document.getElementById('snapshot').style.display!=='none') doSearch(); };
+    mt.appendChild(btn);
+  });
+}
+
+function setMode(mode){
+  currentMode=mode;
+  document.getElementById('btnSingle').className='tog-btn'+(mode==='single'?' active':'');
+  document.getElementById('btnBulk').className='tog-btn'+(mode==='bulk'?' active':'');
+  var s=mode==='single';
+  document.getElementById('searchInput').style.display=s?'':'none';
+  document.getElementById('hint').style.display=s?'':'none';
+  document.querySelector('.go-btn').style.display=s?'':'none';
+  document.getElementById('bulkArea').className='bulk-area'+(s?'':' show');
+  document.getElementById('stateDefault').style.display='block';
+  document.getElementById('stateNotFound').style.display='none';
+  document.getElementById('snapshot').style.display='none';
+  document.getElementById('bulkSum').className='bulk-sum';
+}
+
+function fmtPct(v){return v==null?'N/A':v.toFixed(1)+'%';}
+function fmtNum(v){return v==null?'N/A':Math.round(v).toLocaleString();}
+function fmtCur(v){if(v==null)return'N/A';if(v>=1e6)return'$'+(v/1e6).toFixed(1)+'M';if(v>=1e3)return'$'+(v/1e3).toFixed(0)+'K';return'$'+Math.round(v).toLocaleString();}
+function fmtFsmi(v){return v==null?'N/A':v.toFixed(2);}
+function yoySign(v){return v==null?'N/A':(v>=0?'+':'')+v.toFixed(1)+'%';}
+function daysSign(v){return v==null?'N/A':(v>=0?'+':'')+v.toFixed(2)+' days';}
+function sa(v){return v!=null?v:'N/A';}
+function sc(v,g,w){return v==null?'neutral':v>=g?'good':v>=w?'warn':'bad';}
+function lc(v){return v==null?'neutral':v<=10?'good':v<=25?'warn':'bad';}
+function yc(v){return v==null?'':v>=0?'yoy-pos':'yoy-neg';}
+function fc(v){return v==null?'fsmi-fair':v>=1.0?'fsmi-over':v>=0.8?'fsmi-fair':'fsmi-under';}
+function mc(v,lower){if(v==null)return'';var imp=lower?v<0:v>0;var cls=Math.abs(v)<0.01?'mom-flat':(imp?'mom-down':'mom-up');return '<span class="mom '+cls+'">'+(v>0?'+':'')+v.toFixed(1)+'%</span>';}
+function pg(v,label,gm,wm,vs){
+  var val=v==null?0:v,pct=Math.min(100,Math.max(0,val));
+  var cls=pct>=gm?'pg-good':pct>=wm?'pg-warn':'pg-bad';
+  var chip='';
+  if(vs!=null){var vc=vs>=0?'color:#1e9c5b':'color:#d94040';chip='<span class="vs-chip" style="'+vc+'">'+(vs>=0?'+':'')+vs.toFixed(1)+' pp vs CS</span>';}
+  return '<div class="prog-row"><div class="prog-label-row"><span>'+label+chip+'</span><span>'+pct.toFixed(1)+'%</span></div><div class="prog-track"><div class="prog-fill '+cls+'" style="width:'+pct+'%"></div></div></div>';
+}
+
+function buildSnap(h){
+  var isWyndham = SCHEMA && SCHEMA.name==='Wyndham';
+  var html='';
+  html+='<div class="prop-header"><div class="prop-title">'+(h.name||'Unknown')+'</div><div class="prop-meta">';
+  html+='<span class="badge-month">'+currentMonth+'</span>';
+  html+='<span class="badge">EG ID: '+h.id+'</span>';
+  if(h.code) html+='<span class="badge">Code: '+h.code+'</span>';
+  if(h.brand) html+='<span class="badge-accent">'+h.brand+'</span>';
+  if(h.sr) html+='<span class="badge">'+h.sr+(h.region?' · '+h.region:'')+'</span>';
+  if(h.country) html+='<span class="badge">'+h.country+'</span>';
+  if(h.market) html+='<span class="badge">'+h.market+'</span>';
+  if(h.mm) html+='<span class="badge">MM: '+h.mm+'</span>';
+  if(h.conn) html+='<span class="badge-accent">Connectivity: '+h.conn+'</span>';
+  html+='</div></div>';
+
+  html+='<div class="sec-title">Search &amp; Sort Factors</div><div class="sec-grid">';
+  html+='<div class="card"><div class="card-title">Supply scores</div>';
+  html+='<div class="score-row"><span>Guest experience score</span><div style="display:flex;align-items:center"><span class="score-num '+sc(h.ges,85,75)+'">'+sa(h.ges)+'</span><span style="font-size:11px;color:var(--text-secondary,#5a6478);margin-left:3px">/100</span></div></div>';
+  html+='<div class="score-row"><span>Offer strength score</span><div style="display:flex;align-items:center"><span class="score-num '+sc(h.oss,85,75)+'">'+sa(h.oss)+'</span><span style="font-size:11px;color:var(--text-secondary,#5a6478);margin-left:3px">/100</span></div></div></div>';
+  html+='<div class="card"><div class="card-title">Expedia shops (unfenced)</div>';
+  html+='<div class="score-row"><span>Availability lose</span><div style="display:flex;align-items:center"><span class="score-num '+lc(h.al)+'">'+fmtPct(h.al)+'</span>'+mc(h.al_m,true)+'</div></div>';
+  html+='<div class="score-row"><span>Rate lose</span><div style="display:flex;align-items:center"><span class="score-num '+lc(h.rl)+'">'+fmtPct(h.rl)+'</span>'+mc(h.rl_m,true)+'</div></div></div>';
+  html+='<div class="card"><div class="card-title">Content score</div>'+pg(h.cs,'Content completion',95,85)+'<div style="display:flex;align-items:center;gap:6px;margin-top:4px;font-size:12px"><span style="color:var(--text-secondary)">MoM:</span>'+mc(h.cs_m,false)+'</div></div>';
+  html+='</div>';
+
+  html+='<div class="sec-title">Booked Production (Last 30 Days)</div><div class="sec-grid">';
+  html+='<div class="card"><div class="card-title">Room nights</div><div class="kpi-grid"><div><div class="kpi-label">Net room nights</div><div class="kpi-val">'+fmtNum(h.nrn)+'</div></div><div><div class="kpi-label">YoY growth</div><div class="kpi-val '+yc(h.nrn_y)+'">'+yoySign(h.nrn_y)+'</div><div class="kpi-sub">Compset: '+yoySign(h.nrn_cy)+'</div></div></div></div>';
+  html+='<div class="card"><div class="card-title">Hotel revenue</div><div class="kpi-grid"><div><div class="kpi-label">Total revenue</div><div class="kpi-val" style="font-size:15px">'+fmtCur(h.rev)+'</div></div><div><div class="kpi-label">YoY growth</div><div class="kpi-val '+yc(h.rev_y)+'">'+yoySign(h.rev_y)+'</div><div class="kpi-sub">Compset: '+yoySign(h.rev_cy)+'</div></div></div></div>';
+
+  if(isWyndham && h.adr!=null){
+    html+='<div class="card"><div class="card-title">ADR</div><div class="kpi-grid"><div><div class="kpi-label">Avg daily rate</div><div class="kpi-val" style="font-size:15px">$'+(h.adr||0).toFixed(2)+'</div></div><div><div class="kpi-label">YoY growth</div><div class="kpi-val '+yc(h.adr_y)+'">'+yoySign(h.adr_y)+'</div><div class="kpi-sub">Compset: '+yoySign(h.adr_cy)+'</div></div></div></div>';
+  }
+  if(!isWyndham){
+    var b2c=h.b2c||0,b2b=h.b2b||0;
+    html+='<div class="card"><div class="card-title">Channel mix</div><div class="mix-bar"><div class="mix-b2c" style="width:'+b2c+'%">'+(b2c>8?fmtPct(b2c):'')+'</div><div class="mix-b2b" style="width:'+b2b+'%">'+(b2b>8?fmtPct(b2b):'')+'</div></div><div class="mix-legend"><span><span class="mix-dot" style="background:var(--hdr-bg,#003580)"></span>B2C '+fmtPct(b2c)+'</span><span><span class="mix-dot" style="background:var(--hdr-accent,#00a9b5)"></span>B2B '+fmtPct(b2b)+'</span></div></div>';
+  }
+  html+='</div>';
+
+  if(isWyndham && (h.los||h.bw)){
+    html+='<div class="sec-title">Stay &amp; Booking Patterns</div><div class="sec-grid">';
+    html+='<div class="card"><div class="card-title">Length of stay</div>';
+    html+='<div class="score-row"><span>Avg LOS</span><span class="score-num neutral">'+(h.los!=null?h.los.toFixed(2)+' days':'N/A')+'</span></div>';
+    html+='<div class="score-row"><span>YoY change</span><span class="score-num '+yc(h.los_y)+'">'+daysSign(h.los_y)+'</span></div>';
+    html+='<div class="score-row"><span>vs Compset</span><span class="score-num '+yc(h.los_cs)+'">'+daysSign(h.los_cs)+'</span></div></div>';
+    html+='<div class="card"><div class="card-title">Booking window</div>';
+    html+='<div class="score-row"><span>Avg booking window</span><span class="score-num neutral">'+(h.bw!=null?h.bw.toFixed(2)+' days':'N/A')+'</span></div>';
+    html+='<div class="score-row"><span>YoY change</span><span class="score-num '+yc(h.bw_y)+'">'+daysSign(h.bw_y)+'</span></div>';
+    html+='<div class="score-row"><span>vs Compset</span><span class="score-num '+yc(h.bw_cs)+'">'+daysSign(h.bw_cs)+'</span></div></div>';
+    html+='</div>';
+  }
+
+  if(!isWyndham && (h.b2c_sa!=null||h.b2b_sa!=null)){
+    html+='<div class="sec-title">Rate Plan Mix of Business</div><div class="sec-grid">';
+    html+='<div class="card"><div class="card-title">B2C rate plan share</div>'+pg(h.b2c_sa,'B2C standalone rate share',60,30)+pg(h.b2c_pkg,'B2C package rate share',20,10)+'</div>';
+    html+='<div class="card"><div class="card-title">B2B rate plan share</div>'+pg(h.b2b_sa,'B2B standalone rate share',50,25)+pg(h.b2b_pkg,'B2B package rate share',20,10)+pg(h.b2b_wdc_s,'B2B WDC rate share',15,5)+'</div>';
+    html+='</div>';
+  }
+
+  html+='<div class="sec-title">Fair Share Market Index (FSMI)</div><div class="sec-grid">';
+  html+='<div class="card"><div class="card-title">FSMI vs data science comp set</div>';
+  html+='<div class="fsmi-box"><div style="font-size:10px;color:var(--text-secondary,#5a6478);font-weight:600;margin-bottom:3px">TOTAL FSMI</div><div class="fsmi-val '+fc(h.fsmi)+'">'+fmtFsmi(h.fsmi)+'</div></div>';
+  html+='<div style="margin-top:8px;font-size:10px;color:var(--text-secondary,#5a6478)"><span style="color:#1e9c5b">■</span> ≥1.0 Above &nbsp;<span style="color:var(--hdr-bg,#003580)">■</span> 0.8–1.0 Near &nbsp;<span style="color:#d94040">■</span> &lt;0.8 Below</div>';
+  if(isWyndham && h.fsmi_y!=null) html+='<div style="margin-top:6px;font-size:11px;color:var(--text-secondary)">YoY: <strong class="'+yc(h.fsmi_y)+'">'+yoySign(h.fsmi_y)+'</strong></div>';
+  html+='</div></div>';
+
+  if(!isWyndham){
+    html+='<div class="sec-title">Package &amp; Wholesale Opportunities (Next 121 Days)</div><div class="sec-grid">';
+    html+='<div class="card"><div class="card-title">Bundled rates</div>'+pg(h.bnd_r,'Room types with active bundled rates',80,60)+pg(h.bnd_a,'Bundled availability',80,60)+pg(h.bnd_c,'Bundled cheapest vs standalone',60,30)+'</div>';
+    html+='<div class="card"><div class="card-title">Wholesale direct connect (WDC)</div>'+pg(h.wdc_r,'Room types with active WDC rates',80,60)+pg(h.whl_a,'Wholesale availability',80,60)+pg(h.whl_c,'Wholesale cheapest vs standalone',60,30)+'</div>';
+    html+='</div>';
+  }
+
+  html+='<div class="sec-title">Booking Insights (Last 30 Days)</div><div class="sec-grid">';
+  html+='<div class="card"><div class="card-title">Channel &amp; traveler mix</div>';
+  if(isWyndham) html+=pg(h.pkg,'Package share',20,10,h.pkg_cs);
+  html+=pg(h.acc,'Accelerator share',30,10,h.acc_cs);
+  html+=pg(h.ta,'TravelAds share',15,5,h.ta_cs);
+  html+=pg(h.mob,'Mobile share',40,25,h.mob_cs);
+  html+=pg(h.intl,'International share',30,15,h.intl_cs)+'</div>';
+  html+='<div class="card"><div class="card-title">Cancellations'+(isWyndham?' &amp; refundability':'')+'</div>';
+  html+='<div class="score-row"><span>Cancel rate</span><div style="display:flex;align-items:center"><span class="score-num '+lc(h.cxl)+'">'+fmtPct(h.cxl)+'</span>';
+  if(isWyndham&&h.cxl_cs!=null){var vc2=h.cxl_cs<=0?'#1e9c5b':'#d94040';html+='<span class="vs-chip" style="color:'+vc2+'">'+(h.cxl_cs>=0?'+':'')+h.cxl_cs.toFixed(1)+' pp vs CS</span>';}
+  html+='</div></div>';
+  if(isWyndham&&h.ref!=null){
+    html+='<div class="score-row"><span>Refundable share</span><div style="display:flex;align-items:center"><span class="score-num neutral">'+fmtPct(h.ref)+'</span>';
+    if(h.ref_cs!=null){var vr=h.ref_cs>=0?'#1e9c5b':'#d94040';html+='<span class="vs-chip" style="color:'+vr+'">'+(h.ref_cs>=0?'+':'')+h.ref_cs.toFixed(1)+' pp vs CS</span>';}
+    html+='</div></div>';
+  }
+  html+='<div style="margin-top:6px;font-size:11px;color:var(--text-secondary,#5a6478)">Lower cancel rate is better.'+(isWyndham?' Higher refundable share is better.':'')+'</div></div>';
+  html+='</div>';
+  return html;
+}
+
+function doSearch(){
+  var val=document.getElementById('searchInput').value.trim().replace(/\.0+$/,'');
+  document.getElementById('stateDefault').style.display='none';
+  document.getElementById('stateNotFound').style.display='none';
+  document.getElementById('snapshot').style.display='none';
+  document.getElementById('bulkSum').className='bulk-sum';
+  if(!val) return;
+  var h=MAPS[currentMonth]&&MAPS[currentMonth][val];
+  if(!h){
+    var otherM=MONTHS.find(function(m){return m!==currentMonth&&MAPS[m]&&MAPS[m][val];});
+    var msg='No property found for "'+val+'" in '+currentMonth+'.';
+    if(otherM) msg+=' Found in '+otherM+' — try switching months.';
+    document.getElementById('nfMsg').textContent=msg;
+    document.getElementById('stateNotFound').style.display='block';
+    return;
+  }
+  var snap=document.getElementById('snapshot');
+  snap.innerHTML='<div class="snapshot-block">'+buildSnap(h)+'</div>';
+  snap.style.display='block';
+  snap.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function doBulk(){
+  var raw=document.getElementById('bulkInput').value;
+  var ids=raw.split(/[,\n]+/).map(function(s){return s.trim().replace(/\.0+$/,'');}).filter(function(s){return s.length>0;});
+  if(!ids.length) return;
+  if(ids.length>50){alert('Maximum 50 properties at a time.');return;}
+  document.getElementById('stateDefault').style.display='none';
+  document.getElementById('stateNotFound').style.display='none';
+  var found=[],nf=[],blocks=[];
+  ids.forEach(function(id){
+    var h=MAPS[currentMonth]&&MAPS[currentMonth][id];
+    if(h){found.push(id);blocks.push('<div class="snapshot-block">'+buildSnap(h)+'</div>');}
+    else nf.push(id);
+  });
+  var sum='<strong style="color:'+partnerColor+'">'+found.length+' of '+ids.length+' properties loaded</strong> · '+currentMonth;
+  if(nf.length) sum+=' &nbsp;·&nbsp; <span style="color:#d94040">Not found: '+nf.join(', ')+'</span>';
+  var el=document.getElementById('bulkSum');
+  el.innerHTML=sum; el.className='bulk-sum show';
+  var snap=document.getElementById('snapshot');
+  snap.innerHTML=blocks.join('<hr class="snap-div">');
+  snap.style.display=blocks.length?'block':'none';
+  if(blocks.length) snap.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function onInput(){
+  var val=document.getElementById('searchInput').value.trim();
+  if(!val){document.getElementById('hint').textContent='';return;}
+  var arr=ARRAYS[currentMonth]||[];
+  var matches=[],vl=val.toLowerCase();
+  for(var i=0;i<arr.length&&matches.length<5;i++){
+    var id=arr[i].id,nm=arr[i].name||'';
+    if(id.indexOf(val)===0||nm.toLowerCase().indexOf(vl)!==-1) matches.push(id+' – '+nm);
+  }
+  document.getElementById('hint').textContent=matches.length?matches.join(' | '):'No match';
+}
+
+var dz=document.getElementById('dropZone');
+dz.addEventListener('dragover',function(e){e.preventDefault();dz.classList.add('drag');});
+dz.addEventListener('dragleave',function(){dz.classList.remove('drag');});
+dz.addEventListener('drop',function(e){e.preventDefault();dz.classList.remove('drag');if(e.dataTransfer.files[0]) processFile(e.dataTransfer.files[0]);});
+document.getElementById('fileInput').addEventListener('change',function(e){if(e.target.files[0]) processFile(e.target.files[0]);});
+document.getElementById('uploadAgain').addEventListener('click',function(){
+  document.getElementById('uploadScreen').style.display='block';
+  document.getElementById('dashScreen').style.display='none';
+  document.getElementById('fileInput').value='';
+});
+</script>
+</body>
+</html>
